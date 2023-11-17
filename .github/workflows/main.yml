@@ -1,11 +1,12 @@
 name: Build and Deploy
 
-on: workflow_dispatch
+on:
+  push:
+    branches: ["main"]
 
 env:
   ENVS: "envs"
 
-# for AWS credentials and k8s setting
 permissions:
   id-token: write
   contents: read
@@ -40,5 +41,5 @@ jobs:
           platforms: linux/arm64
           push: true
           tags: |
-            ${{ vars.DOCKERHUB_USERNAME }}/aws-secret-updater:${{ github.sha }}
-            ${{ vars.DOCKERHUB_USERNAME }}/aws-secret-updater:latest
+            ${{ vars.DOCKERHUB_USERNAME }}/aws-ecr-secret-updater:${{ github.sha }}
+            ${{ vars.DOCKERHUB_USERNAME }}/aws-ecr-secret-updater:latest
