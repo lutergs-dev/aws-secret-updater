@@ -10,10 +10,15 @@ echo "aws_secret_access_key = $SECRET_KEY" >> /root/.aws/credentials
 
 aws ecr get-login-password --region $REGION > /root/key.txt
 
-/root/kubectl --kubeconfig=/etc/secret/config delete secret $SECRET_NAME \
-  -n $NAMESPACE
-/root/kubectl --kubeconfig=/etc/secret/config create secret docker-registry $SECRET_NAME \
-  --docker-server=$REPOSITORY_URL \
-  --docker-username=AWS \
-  --docker-password=$(cat /root/key.txt) \
-  -n $NAMESPACE
+IFS=',' read -r -a NAMESPACES <<< "$NAMESPACE"
+
+for ns in "${array[@]}"
+do
+    /root/kubectl --kubeconfig=/etc/secret/config delete secret $SECRET_NAME \
+      -n $ns
+    /root/kubectl --kubeconfig=/etc/secret/config create secret docker-registry $SECRET_NAME \
+      --docker-server=$REPOSITORY_URL \
+      --docker-username=AWS \
+      --docker-password=$(cat /root/key.txt) \
+      -n $ns
+done
