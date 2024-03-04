@@ -12,7 +12,7 @@ aws ecr get-login-password --region $REGION > /root/key.txt
 
 IFS=',' read -r -a NAMESPACES <<< "$NAMESPACE"
 
-for ns in "${array[@]}"
+for ns in "${NAMESPACES[@]}"
 do
     /root/kubectl --kubeconfig=/etc/secret/config delete secret $SECRET_NAME \
       -n $ns
