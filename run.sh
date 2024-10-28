@@ -1,24 +1,19 @@
 #!/bin/sh
 
-# create aws credential folder and set aws info
-mkdir -p /root/.aws
-echo "[default]" > /root/.aws/config
-echo "region = $REGION" >> /root/.aws/config
-echo "[default]" > /root/.aws/credentials
-echo "aws_access_key_id = $ACCESS_KEY" >> /root/.aws/credentials
-echo "aws_secret_access_key = $SECRET_KEY" >> /root/.aws/credentials
+# activate python virtualenv to use aws-cli
+. /python-venv/bin/activate
 
-aws ecr get-login-password --region $REGION > /root/key.txt
+DOCKER_PASSWORD=$(aws ecr get-login-password --region "$AWS_DEFAULT_REGION")
+AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query "Account" --output text)
 
-IFS=',' read -r -a NAMESPACES <<< "$NAMESPACE"
-
-for ns in "${NAMESPACES[@]}"
+IFS=','
+for ns in $NAMESPACES
 do
-    /root/kubectl --kubeconfig=/etc/secret/config delete secret $SECRET_NAME \
-      -n $ns
-    /root/kubectl --kubeconfig=/etc/secret/config create secret docker-registry $SECRET_NAME \
-      --docker-server=$REPOSITORY_URL \
+    kubectl $KUBECTL_CONFIG delete secret "$SECRET_NAME" \
+      -n "$ns"
+    kubectl $KUBECTL_CONFIG create secret docker-registry "$SECRET_NAME" \
+      --docker-server="$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com" \
       --docker-username=AWS \
-      --docker-password=$(cat /root/key.txt) \
-      -n $ns
+      --docker-password="$DOCKER_PASSWORD" \
+      -n "$ns"
 done
